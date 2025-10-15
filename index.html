@@ -5,36 +5,261 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Interactive Arithmetic Textbook</title>
 
-<!-- jsPDF for certificate -->
+<!-- jsPDF for certificate generation -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
-  :root {
-    --primary: #0078d7;
-    --accent: #00b4d8;
-    --light-bg: #f0f8ff;
-    --card-bg: #ffffff;
-  }
-
   body {
     font-family: 'Poppins', sans-serif;
     margin: 0;
-    background: var(--light-bg);
+    background: #f0f8ff;
     color: #222;
-    line-height: 1.5;
+    font-size: 1rem;
   }
 
   header {
-    background: linear-gradient(to right, var(--primary), var(--accent));
+    background: linear-gradient(to right, #0078d7, #00b4d8);
     color: white;
     text-align: center;
-    padding: 1rem;
-    font-size: clamp(1.2rem, 4vw, 1.8rem);
+    padding: 12px;
+    font-size: 1.2em;
     font-weight: 600;
   }
 
   main {
-    padding: 1rem;
+    padding: 10px;
+    max-width: 900px;
+    margin: auto;
+  }
+
+  .chapter {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 25px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  }
+
+  button {
+    background: #0078d7;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1em;
+    margin-top: 10px;
+  }
+
+  button:hover { background: #005fa3; }
+
+  input {
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    width: 80%;
+    margin-top: 5px;
+  }
+
+  .example-box {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin: 10px 0;
+    flex-wrap: wrap;
+  }
+
+  .number-box {
+    background: #ffeb3b;
+    padding: 12px;
+    border-radius: 10px;
+    font-size: 1.3em;
+    width: 70px;
+    text-align: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    transition: transform 0.3s;
+  }
+
+  .number-box.active { transform: scale(1.05); }
+
+  .practice, .challenge {
+    margin-top: 20px;
+    padding: 15px;
+    border-radius: 10px;
+    background: #e0f7fa;
+  }
+
+  .timer {
+    font-weight: bold;
+    font-size: 1.1em;
+    color: #d32f2f;
+    margin-bottom: 10px;
+  }
+
+  .progress {
+    background: #ddd;
+    border-radius: 20px;
+    overflow: hidden;
+    margin-top: 10px;
+    height: 20px;
+  }
+
+  .progress-bar {
+    height: 100%;
+    width: 0%;
+    background: #4caf50;
+    text-align: center;
+    color: white;
+    font-size: 0.8em;
+  }
+
+  @media (max-width: 600px) {
+    body { font-size: 0.9rem; }
+    header { font-size: 1rem; padding: 10px; }
+    .chapter { padding: 15px; margin-bottom: 15px; }
+    button { padding: 7px 14px; font-size: 0.9em; }
+    .number-box { width: 55px; font-size: 1.1em; padding: 10px; }
+  }
+</style>
+</head>
+
+<body>
+<header>📘 Interactive Arithmetic Textbook</header>
+  <h><center>Splendoe Team, VBB 2025-26</center></h>
+  <h><center>AGMHSS Patteeswaram </center></h>
+<main>
+  <section class="chapter">
+    <h2>Welcome!</h2>
+    <p>This interactive textbook helps you master arithmetic through fun examples and exercises.</p>
+    <label>Enter your name to begin:</label><br>
+    <input type="text" id="studentName" placeholder="Enter your full name"><br>
+    <button onclick="startChapter()">Start Chapter 1: Addition ➕</button>
+  </section>
+
+  <section id="chapter1" class="chapter" style="display:none;">
+    <h2>Chapter 1: Understanding Addition</h2>
+    <p>Let’s explore what addition means through examples!</p>
+
+    <div class="example-box">
+      <div class="number-box">2 🍎</div>
+      <div class="number-box">+ 3 🍎</div>
+      <div class="number-box">= ?</div>
+    </div>
+    <button onclick="showAnswer()">Show Answer</button>
+    <p id="addResult" style="font-weight:bold;"></p>
+
+    <div class="practice">
+      <h3>Practice Time!</h3>
+      <p>What is 5 + 7?</p>
+      <input type="number" id="practiceAns" placeholder="Type your answer">
+      <button onclick="checkPractice()">Check</button>
+      <p id="practiceFeedback"></p>
+    </div>
+
+    <div class="challenge">
+      <h3>⏱️ Quick Challenge!</h3>
+      <p>Answer as many sums as you can in <b>20 seconds!</b></p>
+      <div class="timer" id="timer">Time: 20</div>
+      <p id="sumDisplay"></p>
+      <input type="number" id="sumInput" placeholder="Your answer">
+      <button id="submitBtn" onclick="submitAnswer()">Submit</button>
+      <p>Score: <span id="score">0</span></p>
+      <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
+    </div>
+
+    <button onclick="generateCertificate()">Download Certificate 🏆</button>
+  </section>
+</main>
+
+<script>
+let time = 20;
+let timer;
+let score = 0;
+let num1, num2;
+
+function startChapter() {
+  const name = document.getElementById('studentName').value.trim();
+  if (!name) { alert('Please enter your name.'); return; }
+  document.querySelector('.chapter').style.display = 'none';
+  document.getElementById('chapter1').style.display = 'block';
+  startChallenge();
+}
+
+function showAnswer() {
+  document.getElementById('addResult').innerText = "2 + 3 = 5 🍎";
+}
+
+function checkPractice() {
+  const ans = parseInt(document.getElementById('practiceAns').value);
+  const fb = document.getElementById('practiceFeedback');
+  fb.innerText = (ans === 12) ? "✅ Correct! Great job!" : "❌ Try again!";
+}
+
+function startChallenge() {
+  score = 0;
+  time = 20;
+  nextSum();
+  timer = setInterval(updateTimer, 1000);
+}
+
+function updateTimer() {
+  document.getElementById('timer').innerText = "Time: " + time;
+  time--;
+  if (time < 0) {
+    clearInterval(timer);
+    document.getElementById('submitBtn').disabled = true;
+    alert("⏰ Time’s up! Your score: " + score);
+  }
+}
+
+function nextSum() {
+  num1 = Math.floor(Math.random() * 10);
+  num2 = Math.floor(Math.random() * 10);
+  document.getElementById('sumDisplay').innerText = `${num1} + ${num2} = ?`;
+  document.getElementById('sumInput').value = "";
+}
+
+function submitAnswer() {
+  const ans = parseInt(document.getElementById('sumInput').value);
+  if (ans === num1 + num2) {
+    score++;
+    document.getElementById('score').innerText = score;
+    updateProgress();
+  }
+  nextSum();
+}
+
+function updateProgress() {
+  const progress = Math.min(score * 10, 100);
+  document.getElementById('progressBar').style.width = progress + "%";
+}
+
+function generateCertificate() {
+  const name = document.getElementById('studentName').value.trim();
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: "landscape" });
+
+  // Border design
+  doc.setLineWidth(2);
+  doc.setDrawColor(0, 150, 200);
+  doc.rect(10, 10, 277, 190);
+
+  doc.setFontSize(22);
+  doc.text("🎓 Certificate of Achievement 🎓", 70, 40);
+  doc.setFontSize(16);
+  doc.text(`This is to certify that`, 120, 60);
+  doc.setFontSize(20);
+  doc.text(name, 120, 75);
+  doc.setFontSize(16);
+  doc.text(`has successfully completed Chapter 1 - Addition`, 80, 90);
+  doc.text(`with a score of ${score}!`, 120, 105);
+  doc.text("Splendoe Team VBB 2025–26, AGMHS PATTEESWARAM", 65, 130);
+
+  doc.save("Certificate.pdf");
+}
+</script>
+</body>
+</html>    padding: 1rem;
     max-width: 900px;
     margin: auto;
   }
@@ -667,4 +892,5 @@ function downloadCertificate() {
 </script>
 </body>
 </html>
+
 
