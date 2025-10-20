@@ -26,9 +26,7 @@
   p{line-height:1.6}
   .row{display:flex;flex-wrap:wrap;gap:10px}
   .row > *{flex:1 1 260px}
-  input[type="text"], input[type="number"] {
-    padding:10px;border-radius:8px;border:1px solid #cbd5e1;width:100%;
-  }
+  input[type="text"], input[type="number"] {padding:10px;border-radius:8px;border:1px solid #cbd5e1;width:100%;}
   .btn {background:var(--add-1); color:#fff; border:none; padding:10px 16px; border-radius:10px; cursor:pointer; font-size:1rem; transition:transform .04s ease, opacity .2s;}
   .btn:hover{opacity:.95}
   .btn:active{transform:scale(.98)}
@@ -40,6 +38,7 @@
   .timer{font-weight:700;font-size:1rem;color:var(--warn)}
   .progress{background:#e5e7eb;border-radius:20px;overflow:hidden;margin-top:10px}
   .progress-bar{height:18px;width:0%;background:#4caf50;text-align:center;color:#fff;font-size:.8rem;line-height:18px}
+
   /* Theming per chapter */
   .theme-add header{background:linear-gradient(to right,var(--add-1),var(--add-2))}
   .theme-add .btn{background:var(--add-1)} .theme-add .btn-ghost{color:var(--add-1)}
@@ -49,7 +48,7 @@
   .theme-mul .btn{background:var(--mul-1)} .theme-mul .btn-ghost{color:var(--mul-1)}
   .theme-div header{background:linear-gradient(to right,var(--div-1),var(--div-2))}
   .theme-div .btn{background:var(--div-1)} .theme-div .btn-ghost{color:var(--div-1)}
-  /* Mobile */
+
   @media (max-width:640px){
     header{font-size:1.25rem}
     .number-box{min-width:56px}
@@ -59,7 +58,7 @@
 <body class="theme-add">
 <header>📘 Interactive Arithmetic Textbook</header>
 <main>
-  <!-- Intro -->
+  <!-- Intro (Home) -->
   <section id="intro" class="chapter">
     <h2>Welcome!</h2>
     <p>This interactive textbook helps you master basic arithmetic through friendly examples and exercises.</p>
@@ -75,6 +74,9 @@
       <button class="btn" onclick="startLesson('sub')">Start Chapter 2: Subtraction ➖</button>
       <button class="btn" onclick="startLesson('mul')">Start Chapter 3: Multiplication ✖️</button>
       <button class="btn" onclick="startLesson('div')">Start Chapter 4: Division ➗</button>
+    </div>
+    <div class="stack" style="margin-top:10px">
+      <button class="btn-ghost" onclick="resetAll()">Reset (clear details)</button>
     </div>
   </section>
 
@@ -235,6 +237,8 @@
 let score=0, questionCount=0;
 let user={name:'', cls:'', sec:'', school:''};
 let currentChapter='add';
+const CHAPTERS=['add','sub','mul','div'];
+
 let prA=0, prB=0;              // practice operands
 let chA=0, chB=0, chTimer=0, chInterval=null, chScore=0;
 
@@ -249,18 +253,53 @@ function setTheme(ch){
   if(ch==='div') body.classList.add('theme-div');
 }
 function ensureUser(){
-  user.name = $('studentName').value.trim();
-  user.cls  = $('studentClass').value.trim();
-  user.sec  = $('studentSection').value.trim();
-  user.school = $('studentSchool').value.trim();
+  // read inputs but do not clear; we preserve across navigation
+  user.name = $('studentName').value.trim() || user.name;
+  user.cls  = $('studentClass').value.trim() || user.cls;
+  user.sec  = $('studentSection').value.trim() || user.sec;
+  user.school = $('studentSchool').value.trim() || user.school;
   if(!user.name){ alert('Please enter your Name.'); return false; }
   if(!user.cls){ alert('Please enter your Class.'); return false; }
   if(!user.sec){ alert('Please enter your Section.'); return false; }
   if(!user.school){ alert('Please enter your School.'); return false; }
+  // re-fill inputs in case user came back Home
+  $('studentName').value = user.name;
+  $('studentClass').value = user.cls;
+  $('studentSection').value = user.sec;
+  $('studentSchool').value = user.school;
   return true;
 }
 function showOnly(id){
   ['intro','add-sec','sub-sec','mul-sec','div-sec','quiz'].forEach(x=> $(x).style.display = (x===id)?'block':'none');
+}
+function chapterLabel(ch){
+  if(ch==='add') return 'Chapter 1: Addition';
+  if(ch==='sub') return 'Chapter 2: Subtraction';
+  if(ch==='mul') return 'Chapter 3: Multiplication';
+  if(ch==='div') return 'Chapter 4: Division';
+  return 'Arithmetic';
+}
+function r(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
+function nextOf(ch){ const i=CHAPTERS.indexOf(ch); return CHAPTERS[(i+1)%CHAPTERS.length]; }
+function prevOf(ch){ const i=CHAPTERS.indexOf(ch); return CHAPTERS[(i-1+CHAPTERS.length)%CHAPTERS.length]; }
+
+/* ====== Navigation you asked for ====== */
+function goHome(){
+  // keep details; just show intro and keep theme as last chapter’s or default to addition
+  showOnly('intro');
+}
+function resetAll(){
+  user = {name:'',cls:'',sec:'',school:''};
+  $('studentName').value = '';
+  $('studentClass').value = '';
+  $('studentSection').value = '';
+  $('studentSchool').value = '';
+  setTheme('add');
+  showOnly('intro');
+}
+function gotoChapter(ch){
+  if(!ensureUser()) return;
+  startLesson(ch);
 }
 
 /* ====== Start Lessons ====== */
@@ -275,7 +314,6 @@ function startLesson(ch){
 
 /* ====== Practice ====== */
 function newPractice(ch){
-  // pick numbers appropriate to operation
   if(ch==='add'){ prA = r(1,20); prB = r(1,20); $('add-pr-q').textContent = `What is ${prA} + ${prB}?`; $('add-pr-a').value=''; $('add-pr-fb').textContent=''; }
   if(ch==='sub'){ let a=r(1,20), b=r(1,20); prA=Math.max(a,b); prB=Math.min(a,b); $('sub-pr-q').textContent = `What is ${prA} − ${prB}?`; $('sub-pr-a').value=''; $('sub-pr-fb').textContent=''; }
   if(ch==='mul'){ prA = r(1,12); prB = r(1,12); $('mul-pr-q').textContent = `What is ${prA} × ${prB}?`; $('mul-pr-a').value=''; $('mul-pr-fb').textContent=''; }
@@ -316,7 +354,6 @@ function startChallenge(ch){
   },1000);
 }
 function nextChallenge(ch){
-  // generate operands
   if(ch==='add'){ chA=r(0,30); chB=r(0,30); $('add-ch-q').textContent=`What is ${chA} + ${chB}?`; $('add-ch-a').value=''; }
   if(ch==='sub'){ let a=r(0,30), b=r(0,30); chA=Math.max(a,b); chB=Math.min(a,b); $('sub-ch-q').textContent=`What is ${chA} − ${chB}?`; $('sub-ch-a').value=''; }
   if(ch==='mul'){ chA=r(0,12); chB=r(0,12); $('mul-ch-q').textContent=`What is ${chA} × ${chB}?`; $('mul-ch-a').value=''; }
@@ -334,6 +371,7 @@ function checkChallenge(ch){
 
 /* ====== Quiz ====== */
 function startQuiz(ch){
+  if(!ensureUser()) return;
   currentChapter = ch;
   showOnly('quiz');
   $('quiz-title').textContent = `Quiz: ${chapterLabel(ch)}`;
@@ -343,7 +381,7 @@ function startQuiz(ch){
 }
 function nextQuestion(){
   if(questionCount>=5){ showResult(); return; }
-  let a,b,op,corrTxt,ans;
+  let a,b,ans,corrTxt;
   if(currentChapter==='add'){ a=r(0,30); b=r(0,30); ans=a+b; corrTxt=`${a} + ${b}`; }
   if(currentChapter==='sub'){ let x=r(0,30), y=r(0,30); a=Math.max(x,y); b=Math.min(x,y); ans=a-b; corrTxt=`${a} − ${b}`; }
   if(currentChapter==='mul'){ a=r(0,12); b=r(0,12); ans=a*b; corrTxt=`${a} × ${b}`; }
@@ -367,17 +405,17 @@ function checkAnswer(correctAnswer){
   nextQuestion();
 }
 function showResult(){
+  const prev = prevOf(currentChapter);
+  const next = nextOf(currentChapter);
   $('quiz-container').innerHTML =
     `<h3>🎉 Great job, ${user.name}!</h3>
      <p>You completed <strong>${chapterLabel(currentChapter)}</strong>.</p>
      <p>Your final score: <strong>${score} / 5</strong></p>
      <div class="stack">
-       <button class="btn" onclick="downloadCertificate()">
-         🎓 Download Certificate
-       </button>
-       <button class="btn-ghost" onclick="location.reload()">
-         Restart
-       </button>
+       <button class="btn" onclick="downloadCertificate()">🎓 Download Certificate</button>
+       <button class="btn-ghost" onclick="gotoChapter('${prev}')">⬅️ Previous Chapter</button>
+       <button class="btn-ghost" onclick="gotoChapter('${next}')">Next Chapter ➡️</button>
+       <button class="btn" onclick="goHome()">🏠 Home</button>
      </div>`;
   $('progress-bar').style.width='100%'; $('progress-bar').textContent='100%';
 }
@@ -387,6 +425,7 @@ function downloadCertificate(){
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation:'landscape' });
   const pageW = doc.internal.pageSize.getWidth();
+
   // Border + panel
   doc.setDrawColor(0, 128, 255);
   doc.setLineWidth(8);
@@ -421,19 +460,8 @@ function downloadCertificate(){
   doc.setFont('helvetica','bold'); doc.setTextColor(0, 128, 255);
   doc.text('Splendoe School of Mathematics', pageW-120, 186);
 
-  // Save
   const safeName = user.name ? user.name.replace(/[^a-z0-9]+/gi,'_') : 'Student';
   doc.save(`${safeName}_Certificate.pdf`);
-}
-
-/* ====== Utils ====== */
-function r(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
-function chapterLabel(ch){
-  if(ch==='add') return 'Chapter 1: Addition';
-  if(ch==='sub') return 'Chapter 2: Subtraction';
-  if(ch==='mul') return 'Chapter 3: Multiplication';
-  if(ch==='div') return 'Chapter 4: Division';
-  return 'Arithmetic';
 }
 </script>
 </body>
