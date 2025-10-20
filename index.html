@@ -3,182 +3,438 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Interactive Arithmetic & Probability Textbook</title>
+<title>Interactive Basic Arithmetic</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 <!-- jsPDF for certificate generation -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
-  body {font-family: 'Poppins', sans-serif; margin:0; background:#f0f8ff; color:#222;}
-  header {background: linear-gradient(to right,#0078d7,#00b4d8); color:white; text-align:center; padding:20px 10px; font-size:2em; font-weight:600;}
-  main {padding:20px; max-width:900px; margin:auto;}
-  .chapter {background:white; border-radius:12px; padding:20px; margin-bottom:25px; box-shadow:0 4px 10px rgba(0,0,0,0.1);}
-  button {background:#0078d7; color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-size:1em; margin-top:10px;}
-  button:hover {background:#005fa3;}
-  input[type="text"], input[type="number"] {padding:8px; border-radius:6px; border:1px solid #ccc; width:80%; margin-top:5px;}
-  .example-box {display:flex; justify-content:center; gap:15px; margin:10px 0; flex-wrap:wrap;}
-  .number-box {background:#ffeb3b; padding:15px; border-radius:10px; font-size:1.5em; width:70px; text-align:center; box-shadow:0 2px 6px rgba(0,0,0,0.2); transition:transform 0.3s;}
-  .number-box:active {transform:scale(1.1);}
-  .drop-zone {border:2px dashed #888; padding:15px; text-align:center; border-radius:8px; min-height:50px; margin-top:10px;}
-  .practice, .challenge {margin-top:20px; padding:15px; border-radius:10px; background:#e0f7fa;}
-  .timer {font-weight:bold; font-size:1.1em; color:#d32f2f;}
-  .progress {background:#ddd; border-radius:20px; overflow:hidden; margin-top:10px;}
-  .progress-bar {height:20px; width:0%; background:#4caf50; text-align:center; color:white; font-size:0.8em;}
-  /* Probability chapter styles */
-  .color-ball {width:50px; height:50px; border-radius:50%; box-shadow:0 2px 6px rgba(0,0,0,0.2); transition:transform 0.3s;}
-  .color-ball:hover {transform:scale(1.1);}
-  @media (max-width:600px){
-    body {font-size:1em;}
-    header {font-size:1.2em;}
-    .chapter {padding:15px; margin-bottom:20px;}
-    button {padding:8px 16px; font-size:0.9em;}
-    .number-box {width:60px; font-size:1.3em; padding:12px;}
-    .color-ball {width:40px; height:40px;}
+  :root{
+    --bg:#f0f8ff; --text:#222; --card:#fff;
+    --add-1:#0078d7; --add-2:#00b4d8; --add-accent:#136fd1;
+    --sub-1:#ff6b6b; --sub-2:#ff8e8e; --sub-accent:#e85a5a;
+    --mul-1:#2eb872; --mul-2:#52d69a; --mul-accent:#28a463;
+    --div-1:#7b61ff; --div-2:#a48bff; --div-accent:#6a50ee;
+    --good:#16a34a; --warn:#d32f2f;
+  }
+  *{box-sizing:border-box}
+  body {font-family:'Poppins',sans-serif; margin:0; background:var(--bg); color:var(--text);}
+  header {background:linear-gradient(to right,var(--add-1),var(--add-2)); color:#fff; text-align:center; padding:18px 10px; font-size:1.6rem; font-weight:600;}
+  main {padding:18px; max-width:960px; margin:auto;}
+  .chapter {background:var(--card); border-radius:14px; padding:18px; margin-bottom:24px; box-shadow:0 4px 12px rgba(0,0,0,.08);}
+  h2{margin:.2em 0 .6em}
+  h3{margin:1.1em 0 .6em}
+  p{line-height:1.6}
+  .row{display:flex;flex-wrap:wrap;gap:10px}
+  .row > *{flex:1 1 260px}
+  input[type="text"], input[type="number"] {
+    padding:10px;border-radius:8px;border:1px solid #cbd5e1;width:100%;
+  }
+  .btn {background:var(--add-1); color:#fff; border:none; padding:10px 16px; border-radius:10px; cursor:pointer; font-size:1rem; transition:transform .04s ease, opacity .2s;}
+  .btn:hover{opacity:.95}
+  .btn:active{transform:scale(.98)}
+  .btn-ghost{background:#fff;color:var(--add-1);border:1px solid #dbeafe}
+  .stack{display:flex;gap:8px;flex-wrap:wrap}
+  .example-box{display:flex;justify-content:center;gap:12px;margin:10px 0;flex-wrap:wrap}
+  .number-box{background:#ffeb3b;padding:12px 16px;border-radius:10px;font-size:1.2rem;min-width:64px;text-align:center;box-shadow:0 2px 6px rgba(0,0,0,.15)}
+  .practice,.challenge{margin-top:16px;padding:14px;border-radius:12px;background:#eef7ff;border:1px solid #e3f0ff}
+  .timer{font-weight:700;font-size:1rem;color:var(--warn)}
+  .progress{background:#e5e7eb;border-radius:20px;overflow:hidden;margin-top:10px}
+  .progress-bar{height:18px;width:0%;background:#4caf50;text-align:center;color:#fff;font-size:.8rem;line-height:18px}
+  /* Theming per chapter */
+  .theme-add header{background:linear-gradient(to right,var(--add-1),var(--add-2))}
+  .theme-add .btn{background:var(--add-1)} .theme-add .btn-ghost{color:var(--add-1)}
+  .theme-sub header{background:linear-gradient(to right,var(--sub-1),var(--sub-2))}
+  .theme-sub .btn{background:var(--sub-1)} .theme-sub .btn-ghost{color:var(--sub-1)}
+  .theme-mul header{background:linear-gradient(to right,var(--mul-1),var(--mul-2))}
+  .theme-mul .btn{background:var(--mul-1)} .theme-mul .btn-ghost{color:var(--mul-1)}
+  .theme-div header{background:linear-gradient(to right,var(--div-1),var(--div-2))}
+  .theme-div .btn{background:var(--div-1)} .theme-div .btn-ghost{color:var(--div-1)}
+  /* Mobile */
+  @media (max-width:640px){
+    header{font-size:1.25rem}
+    .number-box{min-width:56px}
   }
 </style>
 </head>
-<body>
-<header>📘 Interactive Arithmetic & Probability Textbook</header>
+<body class="theme-add">
+<header>📘 Interactive Arithmetic Textbook</header>
 <main>
-<section id="intro" class="chapter">
-<h2>Welcome!</h2>
-<p>This interactive textbook helps you master arithmetic and probability through fun examples and exercises.</p>
-<p><strong>Enter your name to begin:</strong></p>
-<input type="text" id="studentName" placeholder="Enter your full name" />
-<br><br>
-<button onclick="startLesson('addition')">Start Chapter 1: Addition ➕</button>
-<button onclick="startLesson('probability')">Start Chapter 2: Probability 🎲</button>
-</section>
+  <!-- Intro -->
+  <section id="intro" class="chapter">
+    <h2>Welcome!</h2>
+    <p>This interactive textbook helps you master basic arithmetic through friendly examples and exercises.</p>
+    <div class="row">
+      <div><label><strong>Name</strong></label><input type="text" id="studentName" placeholder="Enter your full name"></div>
+      <div><label><strong>Class</strong></label><input type="text" id="studentClass" placeholder="e.g., 6, 7A"></div>
+      <div><label><strong>Section</strong></label><input type="text" id="studentSection" placeholder="e.g., A, B"></div>
+      <div><label><strong>School</strong></label><input type="text" id="studentSchool" placeholder="Your school name"></div>
+    </div>
+    <p style="margin-top:10px"><strong>Select a chapter:</strong></p>
+    <div class="stack">
+      <button class="btn" onclick="startLesson('add')">Start Chapter 1: Addition ➕</button>
+      <button class="btn" onclick="startLesson('sub')">Start Chapter 2: Subtraction ➖</button>
+      <button class="btn" onclick="startLesson('mul')">Start Chapter 3: Multiplication ✖️</button>
+      <button class="btn" onclick="startLesson('div')">Start Chapter 4: Division ➗</button>
+    </div>
+  </section>
 
-<!-- Addition Lesson -->
-<section id="lesson" class="chapter" style="display:none;">
-<h2 id="lesson-title">Chapter 1: Addition</h2>
-<p>Addition means joining two or more numbers to find the total. For example, <strong>3 + 2 = 5</strong> means you had 3 objects and got 2 more.</p>
-<h3>🔹 Visual Example</h3>
-<div class="example-box">
-  <div class="number-box" id="apple1">🍎🍎🍎</div>
-  <div class="number-box">+</div>
-  <div class="number-box" id="apple2">🍎🍎</div>
-  <div class="number-box">=</div>
-  <div class="number-box" id="apple3">🍎🍎🍎🍎🍎</div>
-</div>
-<p>3 apples + 2 apples = 5 apples</p>
-<h3>🔹 Try it yourself!</h3>
-<p>Drag both numbers into the box to see their sum:</p>
-<div class="example-box">
-  <div class="number-box" draggable="true" ondragstart="drag(event)" id="num1">4</div>
-  <div class="number-box" draggable="true" ondragstart="drag(event)" id="num2">7</div>
-</div>
-<div class="drop-zone" ondrop="drop(event)" ondragover="allowDrop(event)">
-  Drop numbers here 👇
-</div>
-<p id="sumResult"></p>
-<div class="practice">
-  <h3>🧩 Quick Practice</h3>
-  <p id="practiceQ"></p>
-  <input type="number" id="practiceA" placeholder="Type your answer" />
-  <button onclick="checkPractice()">Check</button>
-  <p id="practiceFeedback"></p>
-  <button onclick="newPractice()">Next Question</button>
-</div>
-<div class="challenge">
-  <h3>⚡ 30-Second Challenge!</h3>
-  <p>Answer as many as you can before time runs out!</p>
-  <p id="challengeQ">Press Start to begin.</p>
-  <input type="number" id="challengeA" placeholder="Your answer" />
-  <button onclick="checkChallenge()">Submit</button>
-  <p id="challengeFeedback"></p>
-  <p class="timer" id="timer">Time: 30s</p>
-  <button onclick="startChallenge()">Start Challenge</button>
-</div>
-<button onclick="startQuiz()">Start Final Quiz ➡️</button>
-</section>
+  <!-- Addition -->
+  <section id="add-sec" class="chapter" style="display:none;">
+    <h2>Chapter 1: Addition</h2>
+    <p>Addition means joining two or more numbers to find the total. Example:</p>
+    <div class="example-box">
+      <div class="number-box">🍎🍎🍎</div><div class="number-box">+</div><div class="number-box">🍎🍎</div><div class="number-box">=</div><div class="number-box">🍎🍎🍎🍎🍎</div>
+    </div>
+    <p><strong>3</strong> apples + <strong>2</strong> apples = <strong>5</strong> apples</p>
 
-<!-- Probability Lesson -->
-<section id="probability" class="chapter" style="display:none;">
-<h2>Chapter 2: Probability</h2>
-<p>Probability tells us how likely something is to happen.</p>
-<h3>🔹 Visual Example</h3>
-<p>Imagine a bag with four coloured balls. Each is equally likely to be picked:</p>
-<div class="example-box">
-  <div class="color-ball" style="background:#e74c3c;"></div>
-  <div class="color-ball" style="background:#3498db;"></div>
-  <div class="color-ball" style="background:#2ecc71;"></div>
-  <div class="color-ball" style="background:#f1c40f;"></div>
-</div>
-<button onclick="drawBall()">Draw a Ball 🎲</button>
-<p id="drawResult"></p>
-<div class="practice">
-  <h3>🧩 Quick Practice</h3>
-  <p id="probPracticeQ"></p>
-  <input type="text" id="probPracticeA" placeholder="Type answer e.g. 2/5" />
-  <button onclick="checkProbPractice()">Check</button>
-  <p id="probPracticeFeedback"></p>
-  <button onclick="newProbPractice()">Next Question</button>
-</div>
-</section>
+    <div class="practice">
+      <h3>🧩 Quick Practice</h3>
+      <p id="add-pr-q"></p>
+      <div class="stack">
+        <input type="number" id="add-pr-a" placeholder="Type your answer">
+        <button class="btn" onclick="checkPractice('add')">Check</button>
+        <button class="btn-ghost" onclick="newPractice('add')">Next Question</button>
+      </div>
+      <p id="add-pr-fb"></p>
+    </div>
 
-<!-- Quiz -->
-<section id="quiz" class="chapter" style="display:none;">
-<h2>Quiz: Test Your Skills</h2>
-<div id="quiz-container"></div>
-<div class="progress">
-  <div class="progress-bar" id="progress-bar">0%</div>
-</div>
-</section>
+    <div class="challenge">
+      <h3>⚡ 30-Second Challenge!</h3>
+      <p>Answer as many as you can before time runs out.</p>
+      <p id="add-ch-q">Press Start to begin.</p>
+      <div class="stack">
+        <input type="number" id="add-ch-a" placeholder="Your answer">
+        <button class="btn" onclick="checkChallenge('add')">Submit</button>
+        <button class="btn-ghost" onclick="startChallenge('add')">Start Challenge</button>
+      </div>
+      <p class="timer" id="add-ch-timer">Time: 30s</p>
+      <p id="add-ch-fb"></p>
+    </div>
+
+    <button class="btn" onclick="startQuiz('add')">Start Final Quiz ➡️</button>
+  </section>
+
+  <!-- Subtraction -->
+  <section id="sub-sec" class="chapter" style="display:none;">
+    <h2>Chapter 2: Subtraction</h2>
+    <p>Subtraction finds the difference between numbers. Example:</p>
+    <div class="example-box">
+      <div class="number-box">🍊🍊🍊🍊🍊</div><div class="number-box">−</div><div class="number-box">🍊🍊</div><div class="number-box">=</div><div class="number-box">🍊🍊🍊</div>
+    </div>
+    <p><strong>5</strong> oranges − <strong>2</strong> oranges = <strong>3</strong> oranges</p>
+
+    <div class="practice">
+      <h3>🧩 Quick Practice</h3>
+      <p id="sub-pr-q"></p>
+      <div class="stack">
+        <input type="number" id="sub-pr-a" placeholder="Type your answer">
+        <button class="btn" onclick="checkPractice('sub')">Check</button>
+        <button class="btn-ghost" onclick="newPractice('sub')">Next Question</button>
+      </div>
+      <p id="sub-pr-fb"></p>
+    </div>
+
+    <div class="challenge">
+      <h3>⚡ 30-Second Challenge!</h3>
+      <p>Answer as many as you can before time runs out.</p>
+      <p id="sub-ch-q">Press Start to begin.</p>
+      <div class="stack">
+        <input type="number" id="sub-ch-a" placeholder="Your answer">
+        <button class="btn" onclick="checkChallenge('sub')">Submit</button>
+        <button class="btn-ghost" onclick="startChallenge('sub')">Start Challenge</button>
+      </div>
+      <p class="timer" id="sub-ch-timer">Time: 30s</p>
+      <p id="sub-ch-fb"></p>
+    </div>
+
+    <button class="btn" onclick="startQuiz('sub')">Start Final Quiz ➡️</button>
+  </section>
+
+  <!-- Multiplication -->
+  <section id="mul-sec" class="chapter" style="display:none;">
+    <h2>Chapter 3: Multiplication</h2>
+    <p>Multiplication is repeated addition. Example:</p>
+    <div class="example-box">
+      <div class="number-box">🍇🍇</div><div class="number-box">×</div><div class="number-box">🍇🍇🍇</div><div class="number-box">=</div><div class="number-box">🍇🍇🍇🍇🍇🍇</div>
+    </div>
+    <p><strong>2</strong> groups of <strong>3</strong> = <strong>6</strong></p>
+
+    <div class="practice">
+      <h3>🧩 Quick Practice</h3>
+      <p id="mul-pr-q"></p>
+      <div class="stack">
+        <input type="number" id="mul-pr-a" placeholder="Type your answer">
+        <button class="btn" onclick="checkPractice('mul')">Check</button>
+        <button class="btn-ghost" onclick="newPractice('mul')">Next Question</button>
+      </div>
+      <p id="mul-pr-fb"></p>
+    </div>
+
+    <div class="challenge">
+      <h3>⚡ 30-Second Challenge!</h3>
+      <p>Answer as many as you can before time runs out.</p>
+      <p id="mul-ch-q">Press Start to begin.</p>
+      <div class="stack">
+        <input type="number" id="mul-ch-a" placeholder="Your answer">
+        <button class="btn" onclick="checkChallenge('mul')">Submit</button>
+        <button class="btn-ghost" onclick="startChallenge('mul')">Start Challenge</button>
+      </div>
+      <p class="timer" id="mul-ch-timer">Time: 30s</p>
+      <p id="mul-ch-fb"></p>
+    </div>
+
+    <button class="btn" onclick="startQuiz('mul')">Start Final Quiz ➡️</button>
+  </section>
+
+  <!-- Division -->
+  <section id="div-sec" class="chapter" style="display:none;">
+    <h2>Chapter 4: Division</h2>
+    <p>Division shares or groups equally. Example:</p>
+    <div class="example-box">
+      <div class="number-box">🍪🍪🍪🍪🍪🍪</div><div class="number-box">÷</div><div class="number-box">🍪🍪</div><div class="number-box">=</div><div class="number-box">🍪🍪🍪</div>
+    </div>
+    <p><strong>6</strong> cookies ÷ <strong>2</strong> per group = <strong>3</strong> groups</p>
+
+    <div class="practice">
+      <h3>🧩 Quick Practice</h3>
+      <p id="div-pr-q"></p>
+      <div class="stack">
+        <input type="number" id="div-pr-a" placeholder="Type your answer">
+        <button class="btn" onclick="checkPractice('div')">Check</button>
+        <button class="btn-ghost" onclick="newPractice('div')">Next Question</button>
+      </div>
+      <p id="div-pr-fb"></p>
+    </div>
+
+    <div class="challenge">
+      <h3>⚡ 30-Second Challenge!</h3>
+      <p>Answer as many as you can before time runs out.</p>
+      <p id="div-ch-q">Press Start to begin.</p>
+      <div class="stack">
+        <input type="number" id="div-ch-a" placeholder="Your answer">
+        <button class="btn" onclick="checkChallenge('div')">Submit</button>
+        <button class="btn-ghost" onclick="startChallenge('div')">Start Challenge</button>
+      </div>
+      <p class="timer" id="div-ch-timer">Time: 30s</p>
+      <p id="div-ch-fb"></p>
+    </div>
+
+    <button class="btn" onclick="startQuiz('div')">Start Final Quiz ➡️</button>
+  </section>
+
+  <!-- Quiz -->
+  <section id="quiz" class="chapter" style="display:none;">
+    <h2 id="quiz-title">Quiz</h2>
+    <div id="quiz-container"></div>
+    <div class="progress"><div class="progress-bar" id="progress-bar">0%</div></div>
+  </section>
 </main>
 
 <script>
-let score = 0;
-let questionCount = 0;
-let studentName = "";
-let probQuestion = {};
+/* ====== Global State ====== */
+let score=0, questionCount=0;
+let user={name:'', cls:'', sec:'', school:''};
+let currentChapter='add';
+let prA=0, prB=0;              // practice operands
+let chA=0, chB=0, chTimer=0, chInterval=null, chScore=0;
 
-// Start the selected lesson
-function startLesson(type){
-  studentName = document.getElementById("studentName").value.trim();
-  if(!studentName){ alert("Please enter your name before starting."); return; }
-  document.getElementById("intro").style.display = "none";
-  document.getElementById("lesson").style.display = "none";
-  document.getElementById("probability").style.display = "none";
-  if(type === 'addition'){
-    document.getElementById("lesson").style.display = "block";
-    newPractice();
-  }
-  if(type === 'probability'){
-    document.getElementById("probability").style.display = "block";
-    newProbPractice();
-  }
+/* ====== Helpers ====== */
+function $(id){ return document.getElementById(id); }
+function setTheme(ch){
+  const body=document.body;
+  body.classList.remove('theme-add','theme-sub','theme-mul','theme-div');
+  if(ch==='add') body.classList.add('theme-add');
+  if(ch==='sub') body.classList.add('theme-sub');
+  if(ch==='mul') body.classList.add('theme-mul');
+  if(ch==='div') body.classList.add('theme-div');
+}
+function ensureUser(){
+  user.name = $('studentName').value.trim();
+  user.cls  = $('studentClass').value.trim();
+  user.sec  = $('studentSection').value.trim();
+  user.school = $('studentSchool').value.trim();
+  if(!user.name){ alert('Please enter your Name.'); return false; }
+  if(!user.cls){ alert('Please enter your Class.'); return false; }
+  if(!user.sec){ alert('Please enter your Section.'); return false; }
+  if(!user.school){ alert('Please enter your School.'); return false; }
+  return true;
+}
+function showOnly(id){
+  ['intro','add-sec','sub-sec','mul-sec','div-sec','quiz'].forEach(x=> $(x).style.display = (x===id)?'block':'none');
 }
 
-// Drag & Drop functions for addition example
-function allowDrop(ev){ ev.preventDefault(); }
-function drag(ev){ ev.dataTransfer.setData("text", ev.target.id); }
-function drop(ev){ ev.preventDefault(); const num1 = parseInt(document.getElementById("num1").innerText); const num2 = parseInt(document.getElementById("num2").innerText); const sum = num1 + num2; document.getElementById("sumResult").innerText = `✅ ${num1} + ${num2} = ${sum}`; }
+/* ====== Start Lessons ====== */
+function startLesson(ch){
+  if(!ensureUser()) return;
+  currentChapter = ch;
+  setTheme(ch);
+  showOnly(ch+'-sec');
+  newPractice(ch);
+  resetChallenge(ch);
+}
 
-// Addition practice question
-let a, b;
-function newPractice(){ a = Math.floor(Math.random()*10)+1; b = Math.floor(Math.random()*10)+1; document.getElementById("practiceQ").innerText = `What is ${a} + ${b}?`; document.getElementById("practiceA").value = ''; document.getElementById("practiceFeedback").innerText = ''; }
-function checkPractice(){ const ans = parseInt(document.getElementById("practiceA").value); if(ans === a + b){ document.getElementById("practiceFeedback").innerText = "🎉 Correct!"; } else { document.getElementById("practiceFeedback").innerText = `❌ Try again. The answer is ${a + b}.`; } }
+/* ====== Practice ====== */
+function newPractice(ch){
+  // pick numbers appropriate to operation
+  if(ch==='add'){ prA = r(1,20); prB = r(1,20); $('add-pr-q').textContent = `What is ${prA} + ${prB}?`; $('add-pr-a').value=''; $('add-pr-fb').textContent=''; }
+  if(ch==='sub'){ let a=r(1,20), b=r(1,20); prA=Math.max(a,b); prB=Math.min(a,b); $('sub-pr-q').textContent = `What is ${prA} − ${prB}?`; $('sub-pr-a').value=''; $('sub-pr-fb').textContent=''; }
+  if(ch==='mul'){ prA = r(1,12); prB = r(1,12); $('mul-pr-q').textContent = `What is ${prA} × ${prB}?`; $('mul-pr-a').value=''; $('mul-pr-fb').textContent=''; }
+  if(ch==='div'){ prB = r(2,12); prA = prB * r(2,12); $('div-pr-q').textContent = `What is ${prA} ÷ ${prB}?`; $('div-pr-a').value=''; $('div-pr-fb').textContent=''; }
+}
+function checkPractice(ch){
+  let ans;
+  if(ch==='add'){ ans = parseInt($('add-pr-a').value); $('add-pr-fb').textContent = (ans===prA+prB)?'🎉 Correct!':`❌ Try again. Answer: ${prA+prB}`; }
+  if(ch==='sub'){ ans = parseInt($('sub-pr-a').value); $('sub-pr-fb').textContent = (ans===prA-prB)?'🎉 Correct!':`❌ Try again. Answer: ${prA-prB}`; }
+  if(ch==='mul'){ ans = parseInt($('mul-pr-a').value); $('mul-pr-fb').textContent = (ans===prA*prB)?'🎉 Correct!':`❌ Try again. Answer: ${prA*prB}`; }
+  if(ch==='div'){ ans = parseInt($('div-pr-a').value); $('div-pr-fb').textContent = (ans===Math.floor(prA/prB))?'🎉 Correct!':`❌ Try again. Answer: ${Math.floor(prA/prB)}`; }
+}
 
-// 30-second addition challenge
-let challengeScore = 0, timerSec = 30, cA, cB, timerInterval;
-function startChallenge(){ challengeScore = 0; timerSec = 30; nextChallenge(); clearInterval(timerInterval); timerInterval = setInterval(() => { timerSec--; document.getElementById("timer").innerText = `Time: ${timerSec}s`; if(timerSec <= 0){ clearInterval(timerInterval); document.getElementById("challengeFeedback").innerText = `Time’s up! You got ${challengeScore} correct.`; document.getElementById("challengeQ").innerText = "Challenge Over!"; } }, 1000); }
-function nextChallenge(){ cA = Math.floor(Math.random()*20); cB = Math.floor(Math.random()*20); document.getElementById("challengeQ").innerText = `What is ${cA} + ${cB}?`; document.getElementById("challengeA").value = ""; }
-function checkChallenge(){ const ans = parseInt(document.getElementById("challengeA").value); if(timerSec <= 0) return; if(ans === cA + cB){ challengeScore++; document.getElementById("challengeFeedback").innerText = "✅ Correct!"; } else { document.getElementById("challengeFeedback").innerText = `❌ ${cA + cB} was correct.`; } nextChallenge(); }
+/* ====== Challenge (30s) ====== */
+function resetChallenge(ch){
+  chScore = 0; chTimer = 30; clearInterval(chInterval);
+  if(ch==='add'){ $('add-ch-q').textContent='Press Start to begin.'; $('add-ch-a').value=''; $('add-ch-timer').textContent='Time: 30s'; $('add-ch-fb').textContent=''; }
+  if(ch==='sub'){ $('sub-ch-q').textContent='Press Start to begin.'; $('sub-ch-a').value=''; $('sub-ch-timer').textContent='Time: 30s'; $('sub-ch-fb').textContent=''; }
+  if(ch==='mul'){ $('mul-ch-q').textContent='Press Start to begin.'; $('mul-ch-a').value=''; $('mul-ch-timer').textContent='Time: 30s'; $('mul-ch-fb').textContent=''; }
+  if(ch==='div'){ $('div-ch-q').textContent='Press Start to begin.'; $('div-ch-a').value=''; $('div-ch-timer').textContent='Time: 30s'; $('div-ch-fb').textContent=''; }
+}
+function startChallenge(ch){
+  chScore = 0; chTimer = 30; clearInterval(chInterval);
+  nextChallenge(ch);
+  chInterval = setInterval(()=>{
+    chTimer--;
+    if(ch==='add') $('add-ch-timer').textContent=`Time: ${chTimer}s`;
+    if(ch==='sub') $('sub-ch-timer').textContent=`Time: ${chTimer}s`;
+    if(ch==='mul') $('mul-ch-timer').textContent=`Time: ${chTimer}s`;
+    if(ch==='div') $('div-ch-timer').textContent=`Time: ${chTimer}s`;
+    if(chTimer<=0){
+      clearInterval(chInterval);
+      if(ch==='add'){ $('add-ch-fb').textContent=`Time's up! You got ${chScore} correct.`; $('add-ch-q').textContent='Challenge Over!'; }
+      if(ch==='sub'){ $('sub-ch-fb').textContent=`Time's up! You got ${chScore} correct.`; $('sub-ch-q').textContent='Challenge Over!'; }
+      if(ch==='mul'){ $('mul-ch-fb').textContent=`Time's up! You got ${chScore} correct.`; $('mul-ch-q').textContent='Challenge Over!'; }
+      if(ch==='div'){ $('div-ch-fb').textContent=`Time's up! You got ${chScore} correct.`; $('div-ch-q').textContent='Challenge Over!'; }
+    }
+  },1000);
+}
+function nextChallenge(ch){
+  // generate operands
+  if(ch==='add'){ chA=r(0,30); chB=r(0,30); $('add-ch-q').textContent=`What is ${chA} + ${chB}?`; $('add-ch-a').value=''; }
+  if(ch==='sub'){ let a=r(0,30), b=r(0,30); chA=Math.max(a,b); chB=Math.min(a,b); $('sub-ch-q').textContent=`What is ${chA} − ${chB}?`; $('sub-ch-a').value=''; }
+  if(ch==='mul'){ chA=r(0,12); chB=r(0,12); $('mul-ch-q').textContent=`What is ${chA} × ${chB}?`; $('mul-ch-a').value=''; }
+  if(ch==='div'){ chB=r(2,12); chA=chB*r(0,12); $('div-ch-q').textContent=`What is ${chA} ÷ ${chB}?`; $('div-ch-a').value=''; }
+}
+function checkChallenge(ch){
+  if(chTimer<=0) return;
+  let val;
+  if(ch==='add'){ val=parseInt($('add-ch-a').value); if(val===chA+chB){ chScore++; $('add-ch-fb').textContent='✅ Correct!'; } else { $('add-ch-fb').textContent=`❌ ${chA+chB} was correct.`; } }
+  if(ch==='sub'){ val=parseInt($('sub-ch-a').value); if(val===chA-chB){ chScore++; $('sub-ch-fb').textContent='✅ Correct!'; } else { $('sub-ch-fb').textContent=`❌ ${chA-chB} was correct.`; } }
+  if(ch==='mul'){ val=parseInt($('mul-ch-a').value); if(val===chA*chB){ chScore++; $('mul-ch-fb').textContent='✅ Correct!'; } else { $('mul-ch-fb').textContent=`❌ ${chA*chB} was correct.`; } }
+  if(ch==='div'){ val=parseInt($('div-ch-a').value); const corr = (chB===0)?0:Math.floor(chA/chB); if(val===corr){ chScore++; $('div-ch-fb').textContent='✅ Correct!'; } else { $('div-ch-fb').textContent=`❌ ${corr} was correct.`; } }
+  nextChallenge(ch);
+}
 
-// Addition quiz
-function startQuiz(){ document.getElementById("lesson").style.display = "none"; document.getElementById("quiz").style.display = "block"; score = 0; questionCount = 0; nextQuestion(); }
-function nextQuestion(){ if(questionCount >= 5){ showResult(); return; } const a = Math.floor(Math.random()*20); const b = Math.floor(Math.random()*20); const correctAnswer = a + b; questionCount++; document.getElementById("quiz-container").innerHTML = `<div class="question"><p><strong>Question ${questionCount}:</strong> What is ${a} + ${b}?</p><input type="number" id="userAnswer" placeholder="Enter answer" /><button onclick="checkAnswer(${correctAnswer})">Submit</button></div>`; }
-function checkAnswer(correctAnswer){ const userAnswer = parseInt(document.getElementById("userAnswer").value); if(userAnswer === correctAnswer){ alert("✅ Correct!"); score++; } else { alert("❌ Incorrect. The correct answer is " + correctAnswer); } const progress = (questionCount / 5) * 100; const bar = document.getElementById("progress-bar"); bar.style.width = progress + "%"; bar.textContent = Math.round(progress) + "%"; nextQuestion(); }
-function showResult(){ document.getElementById("quiz-container").innerHTML = `<h3>🎉 Great job, ${studentName}!</h3><p>You completed Chapter 1: Addition.</p><p>Your final score: <strong>${score} / 5</strong></p><button onclick="downloadCertificate()">🎓 Download Certificate</button><br><br><button onclick="location.reload()">Restart</button>`; document.getElementById("progress-bar").style.width = "100%"; document.getElementById("progress-bar").textContent = "100%"; }
+/* ====== Quiz ====== */
+function startQuiz(ch){
+  currentChapter = ch;
+  showOnly('quiz');
+  $('quiz-title').textContent = `Quiz: ${chapterLabel(ch)}`;
+  score=0; questionCount=0;
+  $('progress-bar').style.width='0%'; $('progress-bar').textContent='0%';
+  nextQuestion();
+}
+function nextQuestion(){
+  if(questionCount>=5){ showResult(); return; }
+  let a,b,op,corrTxt,ans;
+  if(currentChapter==='add'){ a=r(0,30); b=r(0,30); ans=a+b; corrTxt=`${a} + ${b}`; }
+  if(currentChapter==='sub'){ let x=r(0,30), y=r(0,30); a=Math.max(x,y); b=Math.min(x,y); ans=a-b; corrTxt=`${a} − ${b}`; }
+  if(currentChapter==='mul'){ a=r(0,12); b=r(0,12); ans=a*b; corrTxt=`${a} × ${b}`; }
+  if(currentChapter==='div'){ b=r(2,12); a=b*r(0,12); ans=a/b; corrTxt=`${a} ÷ ${b}`; }
+  questionCount++;
+  $('quiz-container').innerHTML =
+    `<div class="question">
+       <p><strong>Question ${questionCount}:</strong> What is ${corrTxt}?</p>
+       <div class="stack">
+         <input type="number" id="userAnswer" placeholder="Enter answer">
+         <button class="btn" onclick="checkAnswer(${ans})">Submit</button>
+       </div>
+     </div>`;
+}
+function checkAnswer(correctAnswer){
+  const v = parseInt($('userAnswer').value);
+  if(v===correctAnswer){ alert('✅ Correct!'); score++; }
+  else { alert('❌ Incorrect. The correct answer is '+correctAnswer); }
+  const p = ((questionCount)/5)*100;
+  $('progress-bar').style.width=p+'%'; $('progress-bar').textContent=Math.round(p)+'%';
+  nextQuestion();
+}
+function showResult(){
+  $('quiz-container').innerHTML =
+    `<h3>🎉 Great job, ${user.name}!</h3>
+     <p>You completed <strong>${chapterLabel(currentChapter)}</strong>.</p>
+     <p>Your final score: <strong>${score} / 5</strong></p>
+     <div class="stack">
+       <button class="btn" onclick="downloadCertificate()">
+         🎓 Download Certificate
+       </button>
+       <button class="btn-ghost" onclick="location.reload()">
+         Restart
+       </button>
+     </div>`;
+  $('progress-bar').style.width='100%'; $('progress-bar').textContent='100%';
+}
 
-// Probability functions
-function drawBall(){ const colors = ['Red','Blue','Green','Yellow']; const picked = colors[Math.floor(Math.random()*colors.length)]; document.getElementById("drawResult").innerText = `You drew a ${picked} ball.`; }
-function newProbPractice(){ const total = Math.floor(Math.random()*6) + 3; const blue = Math.floor(Math.random() * (total - 1)) + 1; const red = total - blue; probQuestion.blue = blue; probQuestion.total = total; document.getElementById("probPracticeQ").innerText = `A bag has ${blue} blue balls and ${red} red balls. What is the probability of drawing a blue ball? (as a fraction)`; document.getElementById("probPracticeA").value = ''; document.getElementById("probPracticeFeedback").innerText = ''; }
-function checkProbPractice(){ const ans = document.getElementById("probPracticeA").value.trim(); const correct = `${probQuestion.blue}/${probQuestion.total}`; if(ans === correct){ document.getElementById("probPracticeFeedback").innerText = '🎉 Correct!'; } else { document.getElementById("probPracticeFeedback").innerText = `❌ The correct answer is ${correct}.`; } }
+/* ====== Certificate (jsPDF) ====== */
+function downloadCertificate(){
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation:'landscape' });
+  const pageW = doc.internal.pageSize.getWidth();
+  // Border + panel
+  doc.setDrawColor(0, 128, 255);
+  doc.setLineWidth(8);
+  doc.rect(10,10,pageW-20,190);
+  doc.setFillColor(240,248,255);
+  doc.rect(16,16,pageW-32,178,'F');
 
-// Certificate generation using jsPDF
-function downloadCertificate(){ const { jsPDF } = window.jspdf; const doc = new jsPDF({ orientation:'landscape' }); doc.setDrawColor(0, 128, 255); doc.setLineWidth(10); doc.rect(10,10,270,190); doc.setFillColor(240,248,255); doc.rect(20,20,250,170,'F'); doc.setFont('helvetica','bold'); doc.setFontSize(28); doc.setTextColor(0,51,102); doc.text('Certificate of Achievement', 70, 50); doc.setFontSize(20); doc.setTextColor(0,0,0); doc.text('Awarded to:', 50, 80); doc.setFont('helvetica','bold'); doc.setFontSize(24); doc.text(studentName, 110, 80); doc.setFont('helvetica','normal'); doc.setFontSize(16); doc.text('for successfully completing', 100, 100); doc.text('Chapter 1: Addition', 110, 115); doc.text(`with a final score of ${score} out of 5.`, 95, 130); doc.setFontSize(12); doc.text(`Date: ${new Date().toLocaleDateString()}`, 40, 160); doc.text('Signature: ______________________', 200, 160); doc.setTextColor(0,128,255); doc.setFontSize(14); doc.text('Keep learning and shining! 🌟', 110, 180); doc.save(`${studentName}_Certificate.pdf`); }
+  // Title (centered)
+  doc.setFont('helvetica','bold'); doc.setFontSize(30); doc.setTextColor(20,60,120);
+  doc.text('Certificate of Achievement', pageW/2, 48, {align:'center'});
+
+  // School (centered, user-provided)
+  doc.setFontSize(18); doc.setTextColor(0,0,0);
+  doc.text(user.school || 'Your School', pageW/2, 66, {align:'center'});
+
+  // Recipient lines
+  doc.setFont('helvetica','normal'); doc.setFontSize(16);
+  doc.text(`Name: ${user.name}`, 40, 94);
+  doc.text(`Class: ${user.cls}           Section: ${user.sec}`, 40, 112);
+  doc.text(`School: ${user.school}`, 40, 130);
+
+  // Achievement details
+  doc.text('for successfully completing', 40, 150);
+  doc.setFont('helvetica','bold'); doc.setFontSize(18);
+  doc.text(chapterLabel(currentChapter), 40, 166);
+  doc.setFont('helvetica','normal'); doc.setFontSize(16);
+  doc.text(`with a final score of ${score} out of 5.`, 40, 182);
+
+  // Footer: date + issuer (replacing Signature)
+  doc.setFontSize(12);
+  doc.text(`Date: ${new Date().toLocaleDateString()}`, pageW-120, 170);
+  doc.setFont('helvetica','bold'); doc.setTextColor(0, 128, 255);
+  doc.text('Splendoe School of Mathematics', pageW-120, 186);
+
+  // Save
+  const safeName = user.name ? user.name.replace(/[^a-z0-9]+/gi,'_') : 'Student';
+  doc.save(`${safeName}_Certificate.pdf`);
+}
+
+/* ====== Utils ====== */
+function r(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
+function chapterLabel(ch){
+  if(ch==='add') return 'Chapter 1: Addition';
+  if(ch==='sub') return 'Chapter 2: Subtraction';
+  if(ch==='mul') return 'Chapter 3: Multiplication';
+  if(ch==='div') return 'Chapter 4: Division';
+  return 'Arithmetic';
+}
 </script>
 </body>
 </html>
